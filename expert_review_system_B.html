@@ -402,7 +402,11 @@
                     待评审文档（请评完一份后点击下一份）
                 </div>
                 <div class="panel-content">
-                    <!-- 文档内容将通过JavaScript动态生成 -->
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载文档中...</p>
+                    </div>
+                    <iframe id="documentFrame" src="" allow="fullscreen"></iframe>
                 </div>
             </div>
 
@@ -560,18 +564,9 @@
         function loadDocument(index) {
             const doc = documents[index];
             
-            // 更新右侧文档显示 - 改为按钮形式
-            const documentPanel = document.querySelector('.panel:not(.left-panel):not(.right-panel) .panel-content');
-            documentPanel.innerHTML = `
-                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; text-align: center;">
-                    <div style="font-size: 48px; margin-bottom: 20px; color: #42a5f5;">📄</div>
-                    <h3 style="color: #495057; margin-bottom: 15px;">${doc.name} 待评审文档</h3>
-                    <p style="color: #6c757d; margin-bottom: 25px; line-height: 1.5;">点击下方按钮在新窗口中打开文档进行评审</p>
-                    <button onclick="openDocument('${doc.name}', '${doc.url}')" style="background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(66, 165, 245, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                        📖 打开 ${doc.name} 文档
-                    </button>
-                </div>
-            `;
+            // 更新右侧文档iframe
+            const documentIframe = document.getElementById('documentFrame');
+            documentIframe.src = doc.url;
             
             // 左侧评分表单保持不变，不重新加载
             // 评审者需要手动在WPS表单中翻到对应页面
@@ -579,11 +574,6 @@
             // 更新文档信息
             document.getElementById('documentName').textContent = doc.name;
             document.getElementById('documentBadge').textContent = `第 ${index + 1} 份`;
-        }
-
-        // 打开文档
-        function openDocument(title, url) {
-            window.open(url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
         }
 
         // 更新UI状态
@@ -669,6 +659,10 @@
 
         // iframe加载完成后隐藏loading
         document.getElementById('scoreForm').addEventListener('load', function() {
+            this.previousElementSibling.style.display = 'none';
+        });
+
+        document.getElementById('documentFrame').addEventListener('load', function() {
             this.previousElementSibling.style.display = 'none';
         });
     </script>
