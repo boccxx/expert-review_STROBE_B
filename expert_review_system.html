@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>专家评审系统 - 横断面研究STROBE评估</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 100%;
+            margin: 0 auto;
+            background: white;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+            color: white;
+            padding: 12px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        }
+
+        .progress-text {
+            font-size: 14px;
+            font-weight: 500;
+            min-width: 80px;
+            text-align: right;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: white;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            font-size: 16px;
+            color: #495057;
+        }
+
+        .left-panel {
+            border-right: 2px solid #e9ecef;
+        }
+
+        .panel-content {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+
+        /* 底部控制栏 */
+        .footer {
+            padding: 20px 30px;
+            background: white;
+            border-top: 2px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .document-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .document-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .document-badge {
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-prev {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-prev:hover:not(:disabled) {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+
+        .btn-next {
+            background: linear-gradient(135deg, #42a5f5 0%, #1e88e5 100%);
+            color: white;
+        }
+
+        .btn-next:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 165, 245, 0.4);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 12px 40px;
+            font-size: 16px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 239, 125, 0.4);
+        }
+
+        /* 完成提示 */
+        .completion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .completion-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .completion-modal h2 {
+            font-size: 28px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .completion-modal p {
+            font-size: 16px;
+            color: #6c757d;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                border-right: none;
+                border-bottom: 2px solid #e9ecef;
+            }
+
+            .panel {
+                min-height: 50vh;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #42a5f5;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #42a5f5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部导航栏 -->
+        <div class="header">
+            <h1>横断面研究STROBE报告标准评估系统</h1>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">1 / 9</div>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="main-content">
+            <!-- 左侧评分表格 -->
+            <div class="panel left-panel">
+                <div class="panel-header">
+                    📋 评分表格
+                </div>
+                <div class="panel-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载评分表格中...</p>
+                    </div>
+                    <iframe id="scoreForm" src="https://f.wps.cn/g/ll9DtJW0/" allow="fullscreen"></iframe>
+                </div>
+            </div>
+
+            <!-- 右侧待评审文档 -->
+            <div class="panel">
+                <div class="panel-header">
+                    📄 待评审文档
+                </div>
+                <div class="panel-content">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载文档中...</p>
+                    </div>
+                    <iframe id="documentFrame" src="" allow="fullscreen"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部控制栏 -->
+        <div class="footer">
+            <div class="document-info">
+                <div class="document-name" id="documentName">B01</div>
+                <div class="document-badge" id="documentBadge">第 1 份</div>
+            </div>
+            <div class="navigation">
+                <button class="btn-prev" id="btnPrev" onclick="prevDocument()" disabled>
+                    ← 上一份
+                </button>
+                <button class="btn-next" id="btnNext" onclick="nextDocument()">
+                    下一份 →
+                </button>
+                <button class="btn-submit" id="btnSubmit" onclick="submitAll()" style="display: none;">
+                    ✓ 提交全部评审
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成提示 -->
+    <div class="completion-overlay" id="completionOverlay">
+        <div class="completion-modal">
+            <div class="checkmark">✓</div>
+            <h2>评审完成！</h2>
+            <p>恭喜您完成了全部 9 份文档的评审工作。<br>感谢您的辛勤付出！</p>
+            <button class="btn-submit" onclick="closeCompletion()">确定</button>
+        </div>
+    </div>
+
+    <script>
+        /* ============================================
+         * 配置说明
+         * ============================================
+         * 
+         * 关于WPS表单自动切换：
+         * 
+         * 方法1：使用单一表单（当前方法）
+         * - 系统会在切换文档时重新加载表单
+         * - 评审者需要在WPS表单中手动翻到对应的页面
+         * - 优点：只需维护一个表单
+         * 
+         * 方法2：为每份文档创建独立表单（推荐）
+         * - 在WPS中为每个文档创建单独的表单链接
+         * - 将每个表单链接添加到下面的documents数组中
+         * - 例如：{ id: 'B01', name: 'B01', url: '...', formUrl: 'WPS表单链接1' }
+         * - 优点：完全自动切换，体验最佳
+         * 
+         * ============================================
+         */
+        
+        // 文档数据 - 每份文档对应一个评审文档和评分表单页码
+        const documents = [
+            { id: 'B01', name: 'B01', url: 'https://365.kdocs.cn/l/cnMilwIQbOne', formPage: 1 },
+            { id: 'B02', name: 'B02', url: 'https://365.kdocs.cn/l/cocW0vyrO6G7', formPage: 2 },
+            { id: 'B03', name: 'B03', url: 'https://365.kdocs.cn/l/ce4uV2aWj9qC', formPage: 3 },
+            { id: 'B04', name: 'B04', url: 'https://365.kdocs.cn/l/ch5iXdTrtrPP', formPage: 4 },
+            { id: 'B05', name: 'B05', url: 'https://365.kdocs.cn/l/cg4Ct0onpMiR', formPage: 5 },
+            { id: 'B06', name: 'B06', url: 'https://365.kdocs.cn/l/ceGokce0rM6L', formPage: 6 },
+            { id: 'B07', name: 'B07', url: 'https://365.kdocs.cn/l/coUpzyjPyK3U', formPage: 7 },
+            { id: 'B08', name: 'B08', url: 'https://365.kdocs.cn/l/cfYedgY3LCFX', formPage: 8 },
+            { id: 'B09', name: 'B09', url: 'https://365.kdocs.cn/l/cc8iDlBaM5lT', formPage: 9 }
+        ];
+
+        // WPS表单基础URL
+        const formBaseUrl = 'https://f.wps.cn/g/ll9DtJW0/';
+
+        let currentIndex = 0;
+
+        // 初始化
+        function init() {
+            loadDocument(currentIndex);
+            updateUI();
+        }
+
+        // 加载文档
+        function loadDocument(index) {
+            const doc = documents[index];
+            
+            // 更新右侧文档iframe
+            const documentIframe = document.getElementById('documentFrame');
+            documentIframe.src = doc.url;
+            
+            // 更新左侧评分表单iframe - 尝试切换到对应页面
+            const scoreIframe = document.getElementById('scoreForm');
+            // 重新加载表单以重置到对应页面（WPS表单会记住用户的位置）
+            scoreIframe.src = formBaseUrl + '?page=' + doc.formPage;
+            
+            // 更新文档信息
+            document.getElementById('documentName').textContent = doc.name;
+            document.getElementById('documentBadge').textContent = `第 ${index + 1} 份`;
+        }
+
+        // 更新UI状态
+        function updateUI() {
+            const total = documents.length;
+            const current = currentIndex + 1;
+            
+            // 更新进度条
+            const progress = (current / total) * 100;
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${current} / ${total}`;
+            
+            // 更新按钮状态
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const btnSubmit = document.getElementById('btnSubmit');
+            
+            btnPrev.disabled = currentIndex === 0;
+            
+            if (currentIndex === total - 1) {
+                // 最后一份
+                btnNext.style.display = 'none';
+                btnSubmit.style.display = 'block';
+            } else {
+                btnNext.style.display = 'block';
+                btnSubmit.style.display = 'none';
+            }
+        }
+
+        // 上一份
+        function prevDocument() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadDocument(currentIndex);
+                updateUI();
+            }
+        }
+
+        // 下一份
+        function nextDocument() {
+            if (currentIndex < documents.length - 1) {
+                currentIndex++;
+                loadDocument(currentIndex);
+                updateUI();
+            }
+        }
+
+        // 提交全部
+        function submitAll() {
+            // 显示完成提示
+            document.getElementById('completionOverlay').style.display = 'flex';
+            
+            // 这里可以添加实际的提交逻辑
+            console.log('提交全部评审结果');
+        }
+
+        // 关闭完成提示
+        function closeCompletion() {
+            document.getElementById('completionOverlay').style.display = 'none';
+            
+            // 可以选择重置到第一份或关闭页面
+            // currentIndex = 0;
+            // loadDocument(currentIndex);
+            // updateUI();
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft' && currentIndex > 0) {
+                prevDocument();
+            } else if (e.key === 'ArrowRight' && currentIndex < documents.length - 1) {
+                nextDocument();
+            }
+        });
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+
+        // iframe加载完成后隐藏loading
+        document.getElementById('scoreForm').addEventListener('load', function() {
+            this.previousElementSibling.style.display = 'none';
+        });
+
+        document.getElementById('documentFrame').addEventListener('load', function() {
+            this.previousElementSibling.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
+
